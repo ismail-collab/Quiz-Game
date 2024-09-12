@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Quiz Game</title>
+    <style>
+        /* Reset CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body with a gradient background */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6D83F2, #9BE2FA);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* Main container */
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            text-align: center;
+            width: 90%;
+            transition: transform 0.3s ease;
+        }
+
+        /* Hover effect for the container */
+        .container:hover {
+            transform: translateY(-10px);
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .question {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        /* Button style */
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 30px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .answer {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .answer:hover {
+            background-color: #e2e6ea;
+            transform: translateY(-3px);
+        }
+
+        .correct {
+            background-color: #28a745 !important;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 128, 0, 0.3);
+        }
+
+        .wrong {
+            background-color: #dc3545 !important;
+            color: white;
+            box-shadow: 0 2px 5px rgba(255, 0, 0, 0.3);
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .question {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>API Quiz Game</h1>
+        <div id="question" class="question"></div>
+        <div id="answers" class="answers"></div>
+        <button id="next-question" style="display:none;">Next Question</button>
+    </div>
+
+    <script>
+        const questionContainer = document.getElementById('question');
+        const answersContainer = document.getElementById('answers');
+        const nextButton = document.getElementById('next-question');
+
+        let currentQuestion = {};
+        let acceptingAnswers = false;
+
+        function fetchQuestion() {
+            fetch('https://opentdb.com/api.php?amount=1&type=multiple')
+                .then(response => response.json())
+                .then(data => {
+                    const questionData = data.results[0];
+                    currentQuestion = {
+                        question: questionData.question,
+                        correctAnswer: questionData.correct_answer,
+                        answers: [...questionData.incorrect_answers, questionData.correct_answer].sort(() => Math.random() - 0.5)
+                    };
+
+                    displayQuestion();
+                })
+                .catch(error => console.error('Error fetching question:', error));
+        }
+
+        function displayQuestion() {
+            questionContainer.innerHTML = currentQuestion.question;
+            answersContainer.innerHTML = '';
+            nextButton.style.display = 'none';
+            acceptingAnswers = true;
+
+            currentQuestion.answers.forEach(answer => {
+                const answerElement = document.createElement('div');
+                answerElement.classList.add('answer');
+                answerElement.textContent = answer;
+                answerElement.addEventListener('click', checkAnswer);
+                answersContainer.appendChild(answerElement);
+            });
+        }
+
+        function checkAnswer(event) {
+            if (!acceptingAnswers) return;
+
+            acceptingAnswers = false;
+            const selectedAnswer = event.target;
+            const correct = selectedAnswer.textContent === currentQuestion.correctAnswer;
+
+            selectedAnswer.classList.add(correct ? 'correct' : 'wrong');
+
+            Array.from(answersContainer.children).forEach(answerElement => {
+                if (answerElement.textContent === currentQuestion.correctAnswer) {
+                    answerElement.classList.add('correct');
+                } else {
+                    answerElement.classList.add('wrong');
+                }
+            });
+
+            nextButton.style.display = 'block';
+        }
+
+        nextButton.addEventListener('click', () => {
+            fetchQuestion();
+        });
+
+        fetchQuestion();
+    </script>
+
+</body>
+</html>
